@@ -178,7 +178,12 @@ export default async function BillingPage() {
           <div className="flex gap-3">
             {subscription?.plan_type !== 'enterprise' && subscription?.plan_type !== 'pro' && (
               <CheckoutButton
+<<<<<<< HEAD
                 packageId={subscription?.plan_type === 'free' ? 'basic' : 'pro'}
+=======
+                priceId={subscription?.plan_type === 'free' ? process.env.STRIPE_BASIC_PRICE_ID || 'price_basic' : process.env.STRIPE_PRO_PRICE_ID || 'price_pro'}
+                planType={subscription?.plan_type === 'free' ? 'basic' : 'pro'}
+>>>>>>> upstream/master
                 className="bg-[#0069FF] hover:bg-[#0069FF]/90 text-white"
               >
                 <TrendingUp className="mr-2 h-4 w-4" />
@@ -241,7 +246,12 @@ export default async function BillingPage() {
 
                   {!isCurrentPlan && plan.name !== 'Free' && (
                     <CheckoutButton
+<<<<<<< HEAD
                       packageId={plan.name.toLowerCase()}
+=======
+                      priceId={plan.priceId || ''}
+                      planType={plan.name.toLowerCase()}
+>>>>>>> upstream/master
                       className={`w-full ${plan.popular ? 'bg-[#0069FF] hover:bg-[#0069FF]/90 text-white' : 'border-white/20 text-white hover:bg-white/10'}`}
                       variant={plan.popular ? 'default' : 'outline'}
                     >
@@ -315,8 +325,13 @@ export default async function BillingPage() {
                 <div>
                   <div className="font-medium text-white">Forma de Pagamento</div>
                   <div className="text-sm text-gray-400">
+<<<<<<< HEAD
                     {subscription?.mp_payment_id
                       ? 'PIX / Mercado Pago'
+=======
+                    {subscription?.stripe_customer_id
+                      ? 'Cartão terminando em ••••'
+>>>>>>> upstream/master
                       : 'Nenhuma forma de pagamento cadastrada'
                     }
                   </div>

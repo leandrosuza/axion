@@ -6,7 +6,12 @@ import { Loader2 } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
 
 interface CheckoutButtonProps {
+<<<<<<< HEAD
   packageId: string  // starter, basic, pro, enterprise
+=======
+  priceId: string
+  planType: string
+>>>>>>> upstream/master
   children: React.ReactNode
   variant?: 'default' | 'outline'
   className?: string
@@ -14,7 +19,12 @@ interface CheckoutButtonProps {
 }
 
 export function CheckoutButton({
+<<<<<<< HEAD
   packageId,
+=======
+  priceId,
+  planType,
+>>>>>>> upstream/master
   children,
   variant = 'default',
   className = '',
@@ -27,13 +37,24 @@ export function CheckoutButton({
     try {
       setLoading(true)
 
+<<<<<<< HEAD
       const response = await fetch('/api/credits/purchase', {
+=======
+      const response = await fetch('/api/subscriptions/checkout', {
+>>>>>>> upstream/master
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+<<<<<<< HEAD
           packageId: packageId.toLowerCase(),
+=======
+          priceId: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.includes('test')
+            ? priceId
+            : process.env[`STRIPE_${planType.toUpperCase()}_PRICE_ID`] || priceId,
+          planType: planType.toLowerCase(),
+>>>>>>> upstream/master
         }),
       })
 

@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+<<<<<<< HEAD
 import { mpConfig } from '@/lib/mercadoPagoConfig'
 import { PreApproval } from 'mercadopago'
+=======
+import Stripe from 'stripe'
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2023-10-16',
+})
+>>>>>>> upstream/master
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,11 +26,19 @@ export async function POST(request: NextRequest) {
     // Get user's subscription
     const { data: subscription, error } = await supabase
       .from('subscriptions')
+<<<<<<< HEAD
       .select('mp_subscription_id, plan_type, mp_payment_id')
       .eq('user_id', user.id)
       .single()
 
     if (error || (!subscription?.mp_subscription_id && !subscription?.mp_payment_id)) {
+=======
+      .select('stripe_subscription_id, plan_type')
+      .eq('user_id', user.id)
+      .single()
+
+    if (error || !subscription?.stripe_subscription_id) {
+>>>>>>> upstream/master
       return NextResponse.json(
         { error: 'No active subscription found' },
         { status: 404 }
@@ -36,6 +52,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
+<<<<<<< HEAD
     // Cancel subscription in Mercado Pago
     if (subscription.mp_subscription_id) {
       const preApproval = new PreApproval(mpConfig)
@@ -59,6 +76,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Subscription cancelled successfully',
+=======
+    // Cancel subscription at period end
+    const canceledSubscription = await stripe.subscriptions.update(
+      subscription.stripe_subscription_id,
+      {
+        cancel_at_period_end: true,
+      }
+    )
+
+    return NextResponse.json({
+      success: true,
+      cancels_at: new Date(canceledSubscription.cancel_at! * 1000).toISOString(),
+>>>>>>> upstream/master
     })
   } catch (error: any) {
     console.error('Cancel subscription error:', error)

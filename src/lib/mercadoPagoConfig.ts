@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { MercadoPagoConfig } from 'mercadopago'
 
 // Determina o ambiente de pagamento (padrão: production para pagamentos reais)
@@ -45,6 +46,14 @@ console.log(`[Mercado Pago] Token: ${accessToken?.substring(0, 15)}...`)
 console.log(`[Mercado Pago] Modo: ${isProduction ? '⚠️ PRODUÇÃO (pagamentos reais)' : '✅ TESTE (sandbox)'}`)
 
 // Planos para assinaturas (LEGADO - mantido para compatibilidade)
+=======
+import { MercadoPagoConfig, Payment, PreApproval } from 'mercadopago'
+
+export const mp = new MercadoPagoConfig({
+  accessToken: process.env.MP_ACCESS_TOKEN!,
+})
+
+>>>>>>> upstream/master
 export const MP_PLANS = {
   free: {
     name: 'Free',
@@ -66,6 +75,7 @@ export const MP_PLANS = {
     price: 499,
     preapprovalPlanId: process.env.MP_ENTERPRISE_PLAN_ID,
   },
+<<<<<<< HEAD
 }
 
 // =====================================================
@@ -111,4 +121,6 @@ export const API_CREDIT_COSTS = {
   standard: 1,      // Consultas padrão
   premium: 5,       // Consultas premium/complexas
   bulk: 0.5,        // Consultas em lote (desconto)
+=======
+>>>>>>> upstream/master
 }

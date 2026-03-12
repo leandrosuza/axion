@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+<<<<<<< HEAD
 import { mpConfig, MP_PLANS } from '@/lib/mercadoPagoConfig'
 import { PreApproval } from 'mercadopago'
+=======
+import { MercadoPagoConfig, PreApproval } from 'mercadopago'
+import { MP_PLANS } from '@/lib/mercadopago/client'
+
+const mp = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN! })
+>>>>>>> upstream/master
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,7 +26,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Plano inválido' }, { status: 400 })
     }
 
+<<<<<<< HEAD
     const preApproval = new PreApproval(mpConfig)
+=======
+    const preApproval = new PreApproval(mp)
+>>>>>>> upstream/master
     const response = await preApproval.create({
       body: {
         preapproval_plan_id: plan.preapprovalPlanId,

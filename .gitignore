@@ -6,7 +6,10 @@
 .pnp.js
 .claude
 CLAUDE.md
+<<<<<<< HEAD
 ngrok-v3-stable-windows-amd64
+=======
+>>>>>>> upstream/master
 
 # testing
 /coverage
