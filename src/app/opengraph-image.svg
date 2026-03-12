@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a8a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+
+  <!-- Grid pattern background -->
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+
+  <!-- Left side - Logo and icon -->
+  <g transform="translate(150, 315)">
+    <!-- Database stack icon -->
+    <g transform="scale(1.5)">
+      <!-- Top database -->
+      <ellipse cx="0" cy="-40" rx="60" ry="15" fill="#ffffff" opacity="0.95"/>
+      <rect x="-60" y="-40" width="120" height="30" fill="#ffffff" opacity="0.95"/>
+      <ellipse cx="0" cy="-10" rx="60" ry="15" fill="#e0e7ff" opacity="0.95"/>
+
+      <!-- Middle database -->
+      <ellipse cx="0" cy="10" rx="60" ry="15" fill="#ffffff" opacity="0.85"/>
+      <rect x="-60" y="10" width="120" height="30" fill="#ffffff" opacity="0.85"/>
+      <ellipse cx="0" cy="40" rx="60" ry="15" fill="#e0e7ff" opacity="0.85"/>
+
+      <!-- Bottom database -->
+      <ellipse cx="0" cy="60" rx="60" ry="15" fill="#ffffff" opacity="0.75"/>
+      <rect x="-60" y="60" width="120" height="30" fill="#ffffff" opacity="0.75"/>
+      <ellipse cx="0" cy="90" rx="60" ry="15" fill="#e0e7ff" opacity="0.75"/>
+    </g>
+
+    <!-- Connection nodes -->
+    <circle cx="-80" cy="0" r="10" fill="#fbbf24"/>
+    <circle cx="80" cy="0" r="10" fill="#fbbf24"/>
+    <circle cx="0" cy="100" r="10" fill="#fbbf24"/>
+
+    <!-- Connection lines -->
+    <line x1="-70" y1="0" x2="-70" y2="0" stroke="#fbbf24" stroke-width="3"/>
+    <line x1="70" y1="0" x2="70" y2="0" stroke="#fbbf24" stroke-width="3"/>
+  </g>
+
+  <!-- Right side - Text content -->
+  <g transform="translate(400, 200)">
+    <!-- Title -->
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="#ffffff">
+      BigDataCorp
+    </text>
+
+    <!-- Subtitle -->
+    <text x="0" y="80" font-family="Arial, sans-serif" font-size="36" fill="#e0e7ff">
+      API Rental Platform
+    </text>
+
+    <!-- Description line 1 -->
+    <text x="0" y="150" font-family="Arial, sans-serif" font-size="28" fill="#cbd5e1">
+      Professional API Management &amp; Rate Limiting
+    </text>
+
+    <!-- Description line 2 -->
+    <text x="0" y="190" font-family="Arial, sans-serif" font-size="28" fill="#cbd5e1">
+      The most revolutionary datatech in the country
+    </text>
+
+    <!-- Features -->
+    <g transform="translate(0, 250)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="22" fill="#fbbf24">• Usage Tracking</text>
+      <text x="250" y="0" font-family="Arial, sans-serif" font-size="22" fill="#fbbf24">• Multi-tier Plans</text>
+      <text x="500" y="0" font-family="Arial, sans-serif" font-size="22" fill="#fbbf24">• Analytics</text>
+    </g>
+  </g>
+</svg>

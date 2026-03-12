@@ -1,0 +1,459 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { useToast } from '@/components/ui/use-toast'
+import {
+  Store,
+  Search,
+  Package,
+  Zap,
+  Star,
+  AlertTriangle,
+  Code,
+  Copy,
+  Check,
+  Eye
+} from 'lucide-react'
+
+interface ApiModule {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  long_description: string | null
+  category: string
+  icon: string | null
+  endpoint: string
+  method: string
+  status: string
+  is_premium: boolean
+  price_per_query: number
+  rate_limit_minute: number
+  rate_limit_day: number
+  documentation_url: string | null
+  example_request: any
+  example_response: any
+  required_fields: any
+  response_fields: any
+  tags: string[]
+  total_queries: number
+}
+
+interface GroupedModules {
+  [category: string]: ApiModule[]
+}
+
+export default function MarketplacePage() {
+  const [modules, setModules] = useState<ApiModule[]>([])
+  const [groupedModules, setGroupedModules] = useState<GroupedModules>({})
+  const [categories, setCategories] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [selectedModule, setSelectedModule] = useState<ApiModule | null>(null)
+  const [copied, setCopied] = useState(false)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    fetchModules()
+  }, [])
+
+  const fetchModules = async () => {
+    try {
+      setLoading(true)
+      const res = await fetch('/api/modules')
+      if (!res.ok) throw new Error('Failed to fetch modules')
+      const data = await res.json()
+      setModules(data.modules)
+      setGroupedModules(data.grouped)
+      setCategories(data.categories)
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filteredModules = modules.filter(m => {
+    const matchesSearch = searchQuery === '' ||
+      m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      m.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      m.slug.toLowerCase().includes(searchQuery.toLowerCase())
+
+    const matchesCategory = !selectedCategory || m.category === selectedCategory
+
+    return matchesSearch && matchesCategory
+  })
+
+  const filteredGrouped = Object.entries(groupedModules).reduce((acc, [category, mods]) => {
+    if (selectedCategory && category !== selectedCategory) return acc
+
+    const filtered = mods.filter(m =>
+      searchQuery === '' ||
+      m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      m.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      m.slug.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+
+    if (filtered.length > 0) {
+      acc[category] = filtered
+    }
+
+    return acc
+  }, {} as GroupedModules)
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const getCategoryIcon = (category: string) => {
+    const icons: Record<string, string> = {
+      'Personal Data': '',
+      'Company Data': '',
+      'Vehicle Data': '',
+      'Phone Data': '',
+      'Address Data': '',
+      'Email Data': '',
+      'Credit Data': '',
+      'Financial Data': '',
+      'Legal Data': '',
+      'Social Data': '',
+    }
+    return icons[category] || ''
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-white flex items-center gap-2">
+          <Store className="h-8 w-8" />
+          API Marketplace
+        </h1>
+        <p className="text-gray-400">Browse and discover available API modules</p>
+      </div>
+
+      {/* Search and Filters */}
+      <Card className="bg-white/5 border-white/10 backdrop-blur">
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            {/* Search Bar - Full Width */}
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input
+                variant="dark"
+                placeholder="Search APIs by name, description, or endpoint..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 h-12 text-base"
+              />
+            </div>
+
+            {/* Category Filters */}
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                variant={selectedCategory === null ? 'default' : 'outline'}
+                onClick={() => setSelectedCategory(null)}
+                className={selectedCategory === null ? 'bg-[#0069FF]' : 'border-white/10 text-white hover:bg-white/10'}
+                size="sm"
+              >
+                All
+              </Button>
+              {categories.map(cat => (
+                <Button
+                  key={cat}
+                  variant={selectedCategory === cat ? 'default' : 'outline'}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={selectedCategory === cat ? 'bg-[#0069FF]' : 'border-white/10 text-white hover:bg-white/10'}
+                  size="sm"
+                >
+                  {getCategoryIcon(cat)} {cat}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Stats */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="bg-white/5 border-white/10 backdrop-blur">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-[#0069FF]/20">
+                <Package className="h-6 w-6 text-[#0069FF]" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-white">{modules.length}</p>
+                <p className="text-sm text-gray-400">Total APIs</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-white/5 border-white/10 backdrop-blur">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-green-500/20">
+                <Zap className="h-6 w-6 text-green-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-white">{modules.filter(m => m.status === 'active').length}</p>
+                <p className="text-sm text-gray-400">Active APIs</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-white/5 border-white/10 backdrop-blur">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-yellow-500/20">
+                <Star className="h-6 w-6 text-yellow-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-white">{modules.filter(m => m.is_premium).length}</p>
+                <p className="text-sm text-gray-400">Premium APIs</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Modules List */}
+      {loading ? (
+        <div className="text-center py-12 text-gray-400">Loading APIs...</div>
+      ) : Object.keys(filteredGrouped).length === 0 ? (
+        <div className="text-center py-12 text-gray-400">
+          No APIs found matching your search.
+        </div>
+      ) : (
+        Object.entries(filteredGrouped).map(([category, mods]) => (
+          <div key={category} className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                <span>{getCategoryIcon(category)}</span>
+                {category}
+                <Badge variant="secondary" className="ml-2">{mods.length}</Badge>
+              </h2>
+            </div>
+
+            <Card className="bg-white/5 border-white/10 backdrop-blur overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-white/10 hover:bg-transparent">
+                    <TableHead className="text-gray-300 font-semibold">API Name</TableHead>
+                    <TableHead className="text-gray-300 font-semibold">Description</TableHead>
+                    <TableHead className="text-gray-300 font-semibold">Endpoint</TableHead>
+                    <TableHead className="text-gray-300 font-semibold text-center">Cost</TableHead>
+                    <TableHead className="text-gray-300 font-semibold text-center">Rate Limit</TableHead>
+                    <TableHead className="text-gray-300 font-semibold text-center">Status</TableHead>
+                    <TableHead className="text-gray-300 font-semibold text-center">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {mods.map((module) => (
+                    <TableRow
+                      key={module.id}
+                      className="border-white/10 hover:bg-white/5 transition-colors"
+                    >
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <span className="text-white">{module.name}</span>
+                          {module.is_premium && (
+                            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">{module.slug}</div>
+                      </TableCell>
+                      <TableCell className="max-w-md">
+                        <p className="text-gray-300 text-sm line-clamp-2">
+                          {module.description || 'No description available'}
+                        </p>
+                      </TableCell>
+                      <TableCell>
+                        <code className="text-xs bg-white/5 px-2 py-1 rounded text-gray-300">
+                          <span className="text-green-400 font-semibold">{module.method}</span> {module.endpoint}
+                        </code>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-1 text-sm text-gray-300">
+                          <Zap className="h-3 w-3 text-yellow-500" />
+                          <span>{module.price_per_query}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex flex-col gap-1 items-center text-xs text-gray-400">
+                          <span>{module.rate_limit_minute}/min</span>
+                          <span>{module.rate_limit_day}/day</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {module.status === 'active' ? (
+                          <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                            Active
+                          </Badge>
+                        ) : module.status === 'maintenance' ? (
+                          <Badge variant="outline" className="border-yellow-500 text-yellow-500">
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            Maintenance
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="bg-gray-500/20 text-gray-400">
+                            Inactive
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedModule(module)}
+                          className="border-white/10 text-white hover:bg-white/10"
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          </div>
+        ))
+      )}
+
+      {/* Module Detail Dialog */}
+      <Dialog open={!!selectedModule} onOpenChange={(open) => !open && setSelectedModule(null)}>
+        <DialogContent className="bg-[#1A1D3B] border-white/10 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+          {selectedModule && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  {selectedModule.name}
+                  {selectedModule.is_premium && (
+                    <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                  )}
+                  {selectedModule.status === 'maintenance' && (
+                    <Badge variant="outline" className="border-yellow-500 text-yellow-500 ml-2">
+                      Maintenance
+                    </Badge>
+                  )}
+                </DialogTitle>
+                <DialogDescription className="text-gray-400">
+                  {selectedModule.description}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-6 py-4">
+                {/* Endpoint */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-400 mb-2">Endpoint</h4>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 bg-white/5 px-3 py-2 rounded text-sm">
+                      <span className="text-green-400">{selectedModule.method}</span>{' '}
+                      <span className="text-gray-300">{selectedModule.endpoint}</span>
+                    </code>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToClipboard(selectedModule.endpoint)}
+                      className="border-white/10 text-white hover:bg-white/10"
+                    >
+                      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Pricing & Limits */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <p className="text-gray-400 text-xs mb-1">Price per query</p>
+                    <p className="text-xl font-bold text-white">{selectedModule.price_per_query}</p>
+                    <p className="text-gray-400 text-xs">credits</p>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <p className="text-gray-400 text-xs mb-1">Rate limit</p>
+                    <p className="text-xl font-bold text-white">{selectedModule.rate_limit_minute}</p>
+                    <p className="text-gray-400 text-xs">per minute</p>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <p className="text-gray-400 text-xs mb-1">Daily limit</p>
+                    <p className="text-xl font-bold text-white">{selectedModule.rate_limit_day}</p>
+                    <p className="text-gray-400 text-xs">per day</p>
+                  </div>
+                </div>
+
+                {/* Example Request */}
+                {selectedModule.example_request && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
+                      <Code className="h-4 w-4" />
+                      Example Request
+                    </h4>
+                    <pre className="bg-white/5 p-4 rounded text-sm overflow-x-auto">
+                      <code className="text-gray-300">
+                        {JSON.stringify(selectedModule.example_request, null, 2)}
+                      </code>
+                    </pre>
+                  </div>
+                )}
+
+                {/* Example Response */}
+                {selectedModule.example_response && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
+                      <Code className="h-4 w-4" />
+                      Example Response
+                    </h4>
+                    <pre className="bg-white/5 p-4 rounded text-sm overflow-x-auto">
+                      <code className="text-gray-300">
+                        {JSON.stringify(selectedModule.example_response, null, 2)}
+                      </code>
+                    </pre>
+                  </div>
+                )}
+
+                {/* Tags */}
+                {selectedModule.tags && selectedModule.tags.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-400 mb-2">Tags</h4>
+                    <div className="flex gap-2 flex-wrap">
+                      {selectedModule.tags.map((tag) => (
+                        <Badge key={tag} variant="secondary">{tag}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}

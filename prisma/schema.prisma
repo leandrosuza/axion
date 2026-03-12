@@ -1,0 +1,387 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                String       @id
+  tenant_id         String
+  contractor_id     String
+  email             String       @unique
+  password_hash     String?
+  full_name         String
+  avatar_url        String?
+  phone             String?
+  role              String       @default("user")
+  status            String       @default("active")
+  email_verified    Boolean      @default(false)
+  last_login_at     DateTime?
+  last_login_ip     String?
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+  function          String?
+  credits_available Int          @default(0)
+  credits_used      Int          @default(0)
+  credits_balance   Int          @default(0) // Pay-per-query credit balance
+  plan_type         String       @default("free") // free, basic, pro, enterprise, credits
+  role_id           String?
+  audit_logs        audit_logs[]
+  contractors       contractors  @relation(fields: [contractor_id], references: [id], onDelete: Cascade)
+  tenants           tenants      @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+
+  @@index([contractor_id])
+  @@index([email])
+  @@index([role_id])
+  @@index([tenant_id])
+  @@map("users")
+}
+
+model Subscription {
+  id                    String             @id
+  contractor_id         String
+  plan_id               String
+  asaas_subscription_id String?            @unique
+  credits_available     Int                @default(0)
+  credits_used          Int                @default(0)
+  cycle_start_date      DateTime
+  cycle_end_date        DateTime
+  status                String             @default("active")
+  started_at            DateTime           @default(now())
+  cancelled_at          DateTime?
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
+  contractors           contractors        @relation(fields: [contractor_id], references: [id], onDelete: Cascade)
+  subscription_plans    subscription_plans @relation(fields: [plan_id], references: [id])
+
+  @@index([contractor_id])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+model audit_logs {
+  id            String   @id
+  tenant_id     String
+  user_id       String?
+  action        String
+  resource_type String?
+  resource_id   String?
+  ip_address    String?
+  user_agent    String?
+  old_values    Json?
+  new_values    Json?
+  metadata      Json?
+  created_at    DateTime @default(now())
+  tenants       tenants  @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  users         User?    @relation(fields: [user_id], references: [id])
+
+  @@index([created_at])
+  @@index([tenant_id])
+  @@index([user_id])
+}
+
+model contractors {
+  id                   String               @id
+  tenant_id            String
+  type                 String
+  name                 String
+  cpf_cnpj             String               @unique
+  email                String
+  phone                String?
+  address_zip          String?
+  address_street       String?
+  address_number       String?
+  address_complement   String?
+  address_neighborhood String?
+  address_city         String?
+  address_state        String?
+  asaas_customer_id    String?              @unique
+  status               String               @default("active")
+  created_at           DateTime             @default(now())
+  updated_at           DateTime
+  tenants              tenants              @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  subscriptions        Subscription[]
+  users                User[]
+  contractor_modules   contractor_modules[]
+
+  @@unique([tenant_id, cpf_cnpj])
+  @@index([cpf_cnpj])
+  @@index([tenant_id])
+}
+
+model conversion_jobs {
+  id                 String    @id
+  tenant_id          String
+  contractor_id      String
+  user_id            String
+  original_file_name String
+  original_file_size Int
+  original_file_type String
+  storage_key        String
+  storage_url        String?
+  processing_mode    String    @default("automatic")
+  status             String    @default("pending")
+  priority           Int       @default(0)
+  credits_used       Int       @default(0)
+  model_detected     String?
+  extracted_data     Json?
+  exported_file_key  String?
+  exported_file_url  String?
+  export_format      String?
+  error_message      String?
+  error_stack        String?
+  attempt_count      Int       @default(0)
+  started_at         DateTime?
+  completed_at       DateTime?
+  failed_at          DateTime?
+  created_at         DateTime  @default(now())
+  updated_at         DateTime
+
+  @@index([contractor_id])
+  @@index([created_at])
+  @@index([status])
+  @@index([tenant_id])
+  @@index([user_id])
+}
+
+model credit_alerts {
+  id              String    @id
+  tenant_id       String
+  contractor_id   String
+  subscription_id String
+  alert_type      String
+  threshold       Int
+  current_usage   Int
+  message         String
+  is_read         Boolean   @default(false)
+  is_acknowledged Boolean   @default(false)
+  acknowledged_at DateTime?
+  acknowledged_by String?
+  created_at      DateTime  @default(now())
+
+  @@index([contractor_id])
+  @@index([created_at])
+  @@index([is_read])
+  @@index([subscription_id])
+  @@index([tenant_id])
+}
+
+model daily_metrics {
+  id                   String   @id
+  tenant_id            String
+  contractor_id        String
+  date                 DateTime @db.Date
+  files_processed      Int      @default(0)
+  files_successful     Int      @default(0)
+  files_failed         Int      @default(0)
+  credits_used         Int      @default(0)
+  total_file_size      BigInt   @default(0)
+  average_process_time Float    @default(0)
+  peak_processing_hour Int?
+  created_at           DateTime @default(now())
+  updated_at           DateTime
+
+  @@unique([tenant_id, contractor_id, date])
+  @@index([contractor_id])
+  @@index([date])
+  @@index([tenant_id])
+}
+
+model permissions {
+  id               String             @id
+  resource         String
+  action           String
+  name             String
+  description      String?
+  category         String?
+  created_at       DateTime           @default(now())
+  role_permissions role_permissions[]
+
+  @@unique([resource, action])
+}
+
+model role_permissions {
+  id            String      @id
+  permission_id String
+  granted       Boolean     @default(true)
+  created_at    DateTime    @default(now())
+  role_id       String?
+  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+
+  @@index([role_id])
+}
+
+model roles {
+  id          String   @id
+  tenant_id   String?
+  name        String
+  slug        String
+  description String?
+  is_system   Boolean  @default(false)
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @default(now()) @db.Timestamp(6)
+
+  @@unique([tenant_id, slug])
+  @@index([slug])
+  @@index([tenant_id])
+}
+
+model subscription_plans {
+  id                String         @id
+  tenant_id         String?
+  name              String
+  description       String?
+  credits_per_month Int?
+  is_unlimited      Boolean        @default(false)
+  price_cents       Int
+  currency          String         @default("BRL")
+  billing_cycle     String         @default("monthly")
+  is_active         Boolean        @default(true)
+  is_visible        Boolean        @default(true)
+  display_order     Int            @default(0)
+  created_at        DateTime       @default(now())
+  updated_at        DateTime
+  tenants           tenants?       @relation(fields: [tenant_id], references: [id])
+  subscriptions     Subscription[]
+}
+
+model tenants {
+  id                 String               @id
+  name               String
+  slug               String               @unique
+  logo_url           String?
+  primary_color      String               @default("#3b82f6")
+  secondary_color    String               @default("#1e40af")
+  custom_domain      String?              @unique
+  status             String               @default("active")
+  settings           Json                 @default("{}")
+  created_at         DateTime             @default(now())
+  updated_at         DateTime
+  audit_logs         audit_logs[]
+  contractors        contractors[]
+  subscription_plans subscription_plans[]
+  users              User[]
+}
+
+// API Modules - Managed by Admin (like YouTube videos)
+model api_modules {
+  id                  String               @id @default(uuid())
+  name                String               // e.g., "CPF Query", "CNPJ Query"
+  slug                String               @unique // e.g., "cpf", "cnpj" - used for API routing
+  description         String?
+  long_description    String?              // Detailed description for marketplace
+  category            String               // e.g., "Personal Data", "Company Data", "Vehicle"
+  icon                String?              // Icon name or URL
+  endpoint            String               // The actual API endpoint path
+  method              String               @default("GET") // HTTP method
+  status              String               @default("active") // active, inactive, maintenance
+  is_visible          Boolean              @default(true) // Whether clients can see it in marketplace
+  is_premium          Boolean              @default(false) // Premium modules require higher plan
+  price_per_query     Int                  @default(1) // Credits cost per query
+  rate_limit_minute   Int                  @default(60) // Rate limit per minute
+  rate_limit_day      Int                  @default(1000) // Rate limit per day
+  documentation_url   String?
+  example_request     Json?                // Example request body/params
+  example_response    Json?                // Example response
+  required_fields     Json?                // Required input fields
+  response_fields     Json?                // Response field descriptions
+  tags                String[]             @default([])
+  display_order       Int                  @default(0)
+  total_queries       Int                  @default(0) // Analytics: total queries made
+  created_at          DateTime             @default(now())
+  updated_at          DateTime             @updatedAt
+  contractor_modules  contractor_modules[]
+  module_usage_logs   module_usage_logs[]
+
+  @@index([category])
+  @@index([status])
+  @@index([is_visible])
+  @@index([slug])
+  api_documentation   api_documentation[]
+}
+
+// API Documentation - Rich documentation for API modules
+model api_documentation {
+  id              String      @id @default(uuid())
+  module_id       String?     // Optional: Link to specific API module
+  title           String      // Documentation title
+  slug            String      @unique // URL-friendly slug
+  content         String      @db.Text // Markdown content
+  description     String?     // Short description
+  category        String      @default("General") // e.g., "Getting Started", "API Reference", "Guides"
+  order           Int         @default(0) // Display order
+  is_published    Boolean     @default(true)
+  is_featured     Boolean     @default(false) // Show on homepage
+  tags            String[]    @default([])
+  views           Int         @default(0)
+  created_at      DateTime    @default(now())
+  updated_at      DateTime    @updatedAt
+  api_modules     api_modules? @relation(fields: [module_id], references: [id], onDelete: SetNull)
+
+  @@index([module_id])
+  @@index([category])
+  @@index([slug])
+  @@index([is_published])
+}
+
+// Links contractors to the modules they have access to
+model contractor_modules {
+  id            String      @id @default(uuid())
+  contractor_id String
+  module_id     String
+  is_enabled    Boolean     @default(true)
+  custom_limit  Int?        // Optional custom rate limit override
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
+  contractors   contractors @relation(fields: [contractor_id], references: [id], onDelete: Cascade)
+  api_modules   api_modules @relation(fields: [module_id], references: [id], onDelete: Cascade)
+
+  @@unique([contractor_id, module_id])
+  @@index([contractor_id])
+  @@index([module_id])
+}
+
+// Track usage per module
+model module_usage_logs {
+  id            String      @id @default(uuid())
+  module_id     String
+  contractor_id String
+  user_id       String?
+  request_data  Json?
+  response_code Int
+  response_time Int         // milliseconds
+  credits_used  Int         @default(1)
+  ip_address    String?
+  user_agent    String?
+  created_at    DateTime    @default(now())
+  api_modules   api_modules @relation(fields: [module_id], references: [id], onDelete: Cascade)
+
+  @@index([module_id])
+  @@index([contractor_id])
+  @@index([created_at])
+}
+
+// API Keys for authentication
+model api_keys {
+  id            String    @id @default(uuid())
+  user_id       String
+  contractor_id String
+  name          String
+  key_preview   String    // e.g., "bdc_abc...xyz"
+  key_hash      String    // bcrypt hash
+  key_encrypted String?   // Encrypted full key for display once
+  permissions   String    @default("read") // "read" or "full"
+  is_active     Boolean   @default(true)
+  last_used_at  DateTime?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  @@index([user_id])
+  @@index([contractor_id])
+  @@index([key_hash])
+}
